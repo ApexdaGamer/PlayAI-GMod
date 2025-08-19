@@ -135,9 +135,7 @@ local tools = {
 			name = "getHealth",
 			description = "Gets your health.",
 			parameters = {
-				["type"] = "object",
-				["properties"] = {ignore = nil},
-				required = {}
+				["type"] = "object"
 			}
 		}
 	},
