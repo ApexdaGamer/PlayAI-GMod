@@ -6,7 +6,7 @@ ENT.Editable = true
 
 local bots = {}
 
-local json = require("json.lua")
+local json = require("json")
 
 function ENT:Initialize()
 	local name = "bot"
