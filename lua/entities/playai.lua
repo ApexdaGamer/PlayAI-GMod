@@ -6,6 +6,8 @@ ENT.Editable = true
 
 local bots = {}
 
+local json = require("json.lua")
+
 function ENT:Initialize()
 	local name = "bot"
 	self:SetModel("models/player/gman_high.mdl")
@@ -324,11 +326,11 @@ function ENT:PromptAI(src, ...)
 		HTTP({
 			url = "https://gateway.ai.cloudflare.com/v1/" .. self.CFAID .. "/" .. self.CFGID .. "/workers-ai/" .. self.AIModel,
 			method = "POST",
-			body = util.TableToJSON({
+			body = json.encode({
 				["messages"] = extra,
 				["max_tokens"] = 1000,
 				["tools"] = tools
-			}, false),
+			}),
 			success = function(code, body, headers)
 				local result = util.JSONToTable(body, false, true)
 				if not result["success"] then
@@ -369,7 +371,7 @@ function ENT:PromptAI(src, ...)
 		HTTP({
 			url = "https://api.openai.com/v1/chat/completions",
 			method = "POST",
-			body = util.TableToJSON({
+			body = json.encode({
 				["model"] = self.AIModel,
 				["messages"] = extra,
 				["max_tokens"] = 1000,
