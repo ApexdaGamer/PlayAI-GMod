@@ -137,7 +137,9 @@ local tools = {
 			name = "getHealth",
 			description = "Gets your health.",
 			parameters = {
-				["type"] = "object"
+				["type"] = "object",
+				["properties"] = {},
+				required = {}
 			}
 		}
 	},
@@ -147,7 +149,9 @@ local tools = {
 			name = "getPlayers",
 			description = "Gets the players currently in-game.",
 			parameters = {
-				["type"] = "object"
+				["type"] = "object",
+				["properties"] = {},
+				required = {}
 			}
 		}
 	}
