@@ -2502,7 +2502,7 @@ function ENT:handleResponse(response, src, ...)
 			elseif name == "spawnProp" then
 				local success, err = pcall(function()
 					local ent = ents.Create("prop_physics")
-					ent:SetPos(self:GetPos():Add(Vector(0,45,0)))
+					ent:SetPos(self:GetPos() + Vector(0,45,0))
 					ent:SetModel(args["model"])
 					ent:Spawn()
 				end)
