@@ -6,8 +6,6 @@ ENT.Editable = true
 
 local bots = {}
 
-local json = require("json")
-
 function ENT:Initialize()
 	local name = "bot"
 	self:SetModel("models/player/gman_high.mdl")
@@ -330,7 +328,7 @@ function ENT:PromptAI(src, ...)
 		HTTP({
 			url = "https://gateway.ai.cloudflare.com/v1/" .. self.CFAID .. "/" .. self.CFGID .. "/workers-ai/" .. self.AIModel,
 			method = "POST",
-			body = json.encode({
+			body = require("json").encode({
 				["messages"] = extra,
 				["max_tokens"] = 1000,
 				["tools"] = tools
@@ -375,7 +373,7 @@ function ENT:PromptAI(src, ...)
 		HTTP({
 			url = "https://api.openai.com/v1/chat/completions",
 			method = "POST",
-			body = json.encode({
+			body = require("json").encode({
 				["model"] = self.AIModel,
 				["messages"] = extra,
 				["max_tokens"] = 1000,
