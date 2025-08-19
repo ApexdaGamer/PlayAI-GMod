@@ -145,9 +145,7 @@ local tools = {
 			name = "getPlayers",
 			description = "Gets the players currently in-game.",
 			parameters = {
-				["type"] = "object",
-				["properties"] = {ignore = nil},
-				required = {}
+				["type"] = "object"
 			}
 		}
 	}
