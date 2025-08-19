@@ -136,7 +136,12 @@ local tools = {
 			description = "Gets your health.",
 			parameters = {
 				["type"] = "object",
-				["properties"] = {},
+				["properties"] = {
+					ignore = {
+						type = "integer",
+						description = "Ignored value, bugfix"
+					}
+				},
 				required = {}
 			}
 		}
@@ -148,7 +153,12 @@ local tools = {
 			description = "Gets the players currently in-game.",
 			parameters = {
 				["type"] = "object",
-				["properties"] = {},
+				["properties"] = {
+					ignore = {
+						type = "integer",
+						description = "Ignored value, bugfix"
+					}
+				},
 				required = {}
 			}
 		}
