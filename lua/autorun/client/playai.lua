@@ -1713,7 +1713,15 @@ This is extremely important to me, take a deep breath and have fun :)]]
 	end))
 end)
 
+concommand.Add("stopai", function(ply,cmd,args)
+	print(pcall(function()
+		local ent = LocalPlayer()
+		ent.Enabled = false
+	end))
+end)
+
 hook.Add("OnPlayerChat", "AIChatHook", function(ply, text)
+	if not LocalPlayer().Enabled then return end
 	if text:lower():find(LocalPlayer().Username:lower()) then
 		LocalPlayer():PromptAI(ply:Nick(), {
 			["role"] = "user",
