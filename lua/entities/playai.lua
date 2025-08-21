@@ -1671,13 +1671,13 @@ function ENT:PathfindTo(position, options, toCheck)
 	local path = Path("Follow")
 	path:SetMinLookAheadDistance(options.lookahead or 300)
 	path:SetGoalTolerance(options.tolerance or 20)
-	path:Compute(self, (type(position) == "Entity" and position:GetPos() or position))
+	path:Compute(self, (isentity(position) and position:GetPos() or position))
 
 	if (!path:IsValid()) then return "failed" end
 
-	while (path:IsValid() and toCheck and (self:GetPos():Distance(type(position) == "Entity" and position:GetPos() or position))) do
+	while (path:IsValid() and toCheck and (self:GetPos():Distance(isentity(position) and position:GetPos() or position))) do
 		if (path:GetAge() > 0.1) then
-			path:Compute(self, (type(position) == "Entity" and position:GetPos() or position))
+			path:Compute(self, (isentity(position) and position:GetPos() or position))
 		end
 		path:Update(self)
 
