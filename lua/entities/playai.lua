@@ -1259,48 +1259,63 @@ local tools = {
 	}
 }
 
-if table.HasValue(enabledModules, "propSpawning") then
-	table.insert(tools, {
-		["type"] = "function",
-		["function"] = {
-			name = "spawnProp",
-			description = "Spawns a prop next to you.",
-			parameters = {
-				["type"] = "object",
-				["properties"] = {
-					model = {
-						type = "string",
-						description = "The model to spawn. Possible values are: " .. table.concat(props, ", ")
-					}
-				},
-				required = {"model"}
+function handleEnabledModules()
+	if table.HasValue(enabledModules, "propSpawning") then
+		table.insert(tools, {
+			["type"] = "function",
+			["function"] = {
+				name = "spawnProp",
+				description = "Spawns a prop next to you.",
+				parameters = {
+					["type"] = "object",
+					["properties"] = {
+						model = {
+							type = "string",
+							description = "The model to spawn. Possible values are: " .. table.concat(props, ", ")
+						}
+					},
+					required = {"model"}
+				}
 			}
-		}
-	})
-end
-if table.HasValue(enabledModules, "playerModelSwitching") then
-	table.insert(tools, {
-		["type"] = "function",
-		["function"] = {
-			name = "switchPlayermodel",
-			description = "Switches your playermodel. Only call this if the user explicitly tells you to.",
-			parameters = {
-				["type"] = "object",
-				["properties"] = {
-					model = {
-						type = "string",
-						description = "The playermodel to switch to. Possible values are: " .. table.concat(playermodels, ", ")
-					}
-				},
-				required = {"model"}
+		})
+	else
+		for i,v in pairs(tools) do
+			if v["function"]["name"] == "spawnProp" then
+				table.remove(tools, i)
+			end
+		end
+	end
+	if table.HasValue(enabledModules, "playerModelSwitching") then
+		table.insert(tools, {
+			["type"] = "function",
+			["function"] = {
+				name = "switchPlayermodel",
+				description = "Switches your playermodel. Only call this if the user explicitly tells you to.",
+				parameters = {
+					["type"] = "object",
+					["properties"] = {
+						model = {
+							type = "string",
+							description = "The playermodel to switch to. Possible values are: " .. table.concat(playermodels, ", ")
+						}
+					},
+					required = {"model"}
+				}
 			}
-		}
-	})
+		})
+	else
+		for i,v in pairs(tools) do
+			if v["function"]["name"] == "switchPlayermodel" then
+				table.remove(tools, i)
+			end
+		end
+	end
 end
 
 function ENT:handleResponse(response, src, ...)
 	local tres = {}
 	enabledModules = {}
+	handleEnabledModules()
 	if response["tool_calls"] then
 		print("Received tool calls!")
 		if #response["tool_calls"] > 0 then
@@ -1448,6 +1463,7 @@ function ENT:handleResponse(response, src, ...)
 				})
 			elseif name == "enableModule" then
 				table.insert(enabledModules, args["module"])
+				handleEnabledModules()
 				table.insert(tres, {
 					["role"] = "tool",
 					["content"] = "Successfully enabled the " .. args["module"] .. " module!",
