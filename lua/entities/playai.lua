@@ -1450,7 +1450,7 @@ function ENT:handleResponse(response, src, ...)
 				table.insert(enabledModules, args["module"])
 				table.insert(tres, {
 					["role"] = "tool",
-					["content"] = "Successfully enabled the " .. args["module"] " module!",
+					["content"] = "Successfully enabled the " .. args["module"] .. " module!",
 					["tool_name"] = name,
 					["tool_call_id"] = id
 				})
