@@ -1470,6 +1470,24 @@ function ENT:handleResponse(response, src, ...)
 					["tool_name"] = name,
 					["tool_call_id"] = id
 				})
+			elseif name == "switchPlayermodel" then
+				local model = args["model"]
+				if table.HasValue(playermodels, model) then
+					self:SetModel(model)
+					table.insert(tres, {
+						["role"] = "tool",
+						["content"] = "Successfully switched to the playermodel " .. model .. " !",
+						["tool_name"] = name,
+						["tool_call_id"] = id
+					})
+				else
+					table.insert(tres, {
+						["role"] = "tool",
+						["content"] = "Playermodel " .. model .. " is unavailable!",
+						["tool_name"] = name,
+						["tool_call_id"] = id
+					})
+				end
 			else
 				table.insert(tres, {
 					["role"] = "tool",
