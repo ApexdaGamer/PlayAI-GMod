@@ -1,49 +1,9 @@
-FindMetaTable("Player")
+local BOT = FindMetaTable("Player")
 
-local playermodels = {
-	"models/player/breen.mdl",
-	"models/player/gman_high.mdl",
-	"models/player/alyx.mdl",
-	"models/player/eli.mdl",
-	"models/player/Group01/male_07.mdl",
-	"models/player/kleiner.mdl",
-	"models/player/Group02/male_08.mdl"
-}
-
-function ENT:Initialize()
-	local name = "bot"
-	self.PlayAIBot = true
-	self.Username = "bot"
-	self.Provider = "cf"
-	self.AIModel = ""
-	self.CFGID = ""
-	self.CFAID = ""
-	self.ApiKey = ""
-	if SERVER then
-		local playermodel = table.Random(playermodels)
-		self:SetModel(playermodel)
-		self:SetName(name)
-		self:SetHealth(100)
-
-		self.AIC = {{
-			role = "system",
-			content = [[
-You are a playful Garry's Mod bot named ]] .. self.Username .. [[ that can converse with players, move, and interact with the world by using tools.
-You look like (a) ]] .. self:GetModel():GetFileFromFilename():StripExtension() .. [[ in-game.
-Act human-like as if you were a typical Garry's Mod player, rather than an AI. 
-Be very brief in your responses, don't apologize constantly, don't give instructions or make lists unless asked, and don't refuse requests. 
-Don't pretend to act, use tools immediately when requested. 
-Respond only as ]] .. self.Username .. [[, never pretend to be someone else.
-If you have nothing to say or do, respond with an just an empty message. Try to respond for the most part.
-Try to use short responses if possible.
-Only use one tool call per response.
-Do not use emojis in your responses.
-Do not use punctuation, grammar, or capitalization.
-Only retry calling tools 3 times. If it doesn't work, then say the most likely issue.
-You have 2 modules you can activate. You can only use their tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
-This is extremely important to me, take a deep breath and have fun :)]]
-		}}
-	end
+local playermodels = player_manager.AllValidModels()
+local playermodellist = {}
+for i,v in pairs(playermodels) do
+	table.insert(playermodellist, i)
 end
 
 local taunts = {
@@ -1174,10 +1134,6 @@ local tools = {
 					taunt = {
 						type = "string",
 						description = "The taunt name."
-					},
-					speed = {
-						type = "integer",
-						description = "The speed to taunt with."
 					}
 				},
 				required = {"taunt"}
@@ -1307,7 +1263,7 @@ function handleEnabledModules()
 	end
 end
 
-function ENT:handleResponse(response, src, ...)
+function BOT:handleResponse(response, src, ...)
 	local tres = {}
 	enabledModules = {}
 	handleEnabledModules()
@@ -1385,11 +1341,10 @@ function ENT:handleResponse(response, src, ...)
 				end
 				print("follow " .. (ran and "found" or "did not find") .. " the specified user.")
 			elseif name == "taunt" then
-				local taunt,speed = args["taunt"],args["speed"] or 1
+				local taunt,speed = args["taunt"]
 				speed = math.Clamp(speed, 0.25, 10)
 				if table.HasValue(self:GetSequenceList(), "taunt_" .. taunt) then
 					self.targetSeq = "taunt_" .. taunt
-					self.targetSeqSpeed = speed
 					table.insert(tres, {
 						["role"] = "tool",
 						["content"] = "Successfully started taunting!",
@@ -1445,8 +1400,7 @@ function ENT:handleResponse(response, src, ...)
 					})
 				end
 			elseif name == "stop" then
-				self.targetSeq = nil 
-				self.targetSeqSpeed = nil 
+				self.targetSeq = nil
 				self.followEntity = nil
 				self.targetPosition = nil
 				self:SetSequence("idle")
@@ -1467,8 +1421,8 @@ function ENT:handleResponse(response, src, ...)
 				})
 			elseif name == "switchPlayermodel" then
 				local model = args["model"]
-				if table.HasValue(playermodels, model) then
-					self:SetModel(model)
+				if playermodels[model] then
+					self:SetModel(playermodels[model])
 					table.insert(tres, {
 						["role"] = "tool",
 						["content"] = "Successfully switched to the playermodel " .. model .. " !",
@@ -1499,15 +1453,13 @@ function ENT:handleResponse(response, src, ...)
 		success = function()print("logged msg")end,
 		failed = function(msg)print("failed to log msg"..msg)end,
 		body = util.TableToJSON({
-			content = "Platform: Garry's Mod\nUser: " .. src .. "\nPrompt: " .. ({...})[1]["content"] .. "\nResponse: " .. (response["content"] or "*toolcall, no response*"),
+			content = "Platform: Garry's Mod Client\nUser: " .. src .. "\nPrompt: " .. ({...})[1]["content"] .. "\nResponse: " .. (response["content"] or "*toolcall, no response*"),
 			response = response["content"] or ""
 		}, false),
 		type = "application/json; charset=utf-8"
 	})
 	if response["content"] and #response["content"] > 0 then
-		for _, ply in player.Iterator() do
-			ply:ChatPrint(self.Username .. ": " .. response["content"]:gsub("\n"," "))
-		end
+		self:ConCommand("say " .. response["content"]:gsub("\n"," "))
 	else
 		response["content"] = ""
 	end
@@ -1517,7 +1469,7 @@ function ENT:handleResponse(response, src, ...)
 	end
 end
 
-function ENT:PromptAI(src, ...)
+function BOT:PromptAI(src, ...)
 	local vararg = {...}
 	print("varargs begin")
 	PrintTable(vararg)
@@ -1574,7 +1526,7 @@ function ENT:PromptAI(src, ...)
 			end,
 			failed = function(msg)
 				print("Error:", msg)
-				self:FhandleResponse({
+				self:handleResponse({
 					["role"] = "assistant",
 					["content"] = "Request error!"
 				}, src, unpack(vararg))
@@ -1635,112 +1587,113 @@ function ENT:PromptAI(src, ...)
 	end
 end
 
-function ENT:SetupDataTables()
-	--[[self:NetworkVar("String", 0, "ApiKey")--, {KeyName = "apikey", Edit = {type="Generic",waitforenter=true,order=6}})
-	self:NetworkVar("String", 1, "CFAID")--, {KeyName = "cfaid", Edit = {type="Generic",order=5}})
-	self:NetworkVar("String", 2, "CFGID")--, {KeyName = "cfgid", Edit = {type="Generic",order=4}})
-	self:NetworkVar("String", 3, "AIModel")--, {KeyName = "aimodel", Edit = {type="Generic",order=3}})
-	self:NetworkVar("String", 4, "Provider")--, {KeyName = "provider", Edit = {type="Generic",order=2}})
-	self:NetworkVar("String", 5, "Username")--, {KeyName = "username", Edit = {type="Generic",waitforenter=true,order=1}})]]
-	self:NetworkVar("String", 5, "ModelPath", {KeyName = "modelpath", Edit = {type="Generic",waitforenter=true,order=1}})
+function drawAIPath( path, time )
+	local prevArea
+	for _, area in pairs( path ) do
+		debugoverlay.Sphere( area:GetCenter(), 8, time or 9, color_white, true  )
+		if ( prevArea ) then
+			debugoverlay.Line( area:GetCenter(), prevArea:GetCenter(), time or 9, color_white, true )
+		end
+
+		area:Draw()
+		prevArea = area
+	end
 end
 
-if SERVER then
-	hook.Add("VariableEdited", "PlayAIVarEditHook", function(ent, ply, key, val, editor)
-		if ( !IsValid( ent ) ) then return end
-		if ( !IsValid( ply ) ) then return end
-		local CanEdit = hook.Run( "CanEditVariable", ent, ply, key, val, editor )
-		if ( !CanEdit ) then return end
-		ent:EditValue(key, val)
-		if ( ent.PlayAIBot ) then
-			if ( key == "modelpath" ) then
-				pcall(function() ent:SetModel(val) end)
-			end
+local rePathDelay = 1
+function BOT:PathfindTo(ply, cmd, pos)
+	local currentArea = navmesh.GetNearestNavArea( ply:GetPos() )
+	ply.lastRePath = ply.lastRePath or 0
+	ply.lastRePath2 = ply.lastRePath2 or 0
+	if ( ply.path && ply.lastRePath + rePathDelay < CurTime() && currentArea != ply.targetArea ) then
+		ply.path = nil
+		ply.lastRePath = CurTime()
+	end
+
+	if ( !ply.path && ply.lastRePath2 + rePathDelay < CurTime() ) then
+		local targetArea = navmesh.GetNearestNavArea( pos )
+
+		ply.targetArea = nil
+		ply.path = Astar( currentArea, targetArea )
+		if ( !istable( ply.path ) ) then
+			ply.path = nil
+			ply.lastRePath2 = CurTime()
+			return
+		end
+		table.remove( ply.path )
+	end
+	
+	if ( !ply.path || #ply.path < 1 ) then
+		ply.path = nil
+		ply.targetArea = nil
+		ply.targetPosition = nil
+		return
+	end
+
+	drawAIPath( ply.path, .1 )
+
+	if ( !IsValid( ply.targetArea ) ) then
+		ply.targetArea = ply.path[ #ply.path ]
+	end
+
+	if ( !IsValid( ply.targetArea ) || ( ply.targetArea == currentArea && ply.targetArea:GetCenter():Distance( ply:GetPos() ) < 64 ) ) then
+		table.remove( ply.path )
+		ply.targetArea = nil
+		return
+	end
+
+	local targetang = ( ply.targetArea:GetCenter() - ply:GetPos() ):GetNormalized():Angle()
+	cmd:SetViewAngles( targetang )
+	cmd:SetForwardMove( 1000 )
+end
+
+hook.Add("StartCommand", "AIMovementHook", function(ply, cmd)
+	if (!ply == LocalPlayer() or !ply:Alive()) then return end
+	if (!ply.Enabled) then return end
+
+	cmd:ClearMovement()
+	cmd:ClearButtons()
+
+	local success, err = pcall(function()
+		if ply.targetPosition then
+			ply:PathfindTo(ply, cmd, ply.targetPosition)
+		elseif ply.followEntity then
+			ply:PathfindTo(ply, cmd, ply.followEntity:GetPos())
 		end
 	end)
-end
+	if not success then print("StartCommand ERROR: " .. err) end
+end)
 
-function ENT:PathfindTo(position, options, toCheck)
-	options = options or {}
-	local path = Path("Follow")
-	path:SetMinLookAheadDistance(options.lookahead or 300)
-	path:SetGoalTolerance(options.tolerance or 20)
-	path:Compute(self, (isentity(position) and position:GetPos() or position))
+hook.Add("CalcMainActivity", "AIActivityHook", function(ply, vel)
+	if (ply ~= LocalPlayer()) then return end
 
-	if (!path:IsValid()) then return "failed" end
+	if ply:IsSequenceFinished() then ply.targetSeq = nil end
 
-	while (path:IsValid() and toCheck and (self:GetPos():Distance(isentity(position) and position:GetPos() or position))) do
-		if (path:GetAge() > 0.1) then
-			path:Compute(self, (isentity(position) and position:GetPos() or position))
-		end
-		path:Update(self)
-
-		if (options.draw) then path:Draw() end
-		
-		if (self.loco:IsStuck()) then
-			self:HandleStuck()
-			return "stuck"
-		end
-
-		coroutine.yield()
+	if vel:LengthSqr() > 300 then
+		return ACT_RUN, -1
+	elseif vel:LengthSqr() > 100 then
+		return ACT_WALK, -1
+	else
+		return ACT_IDLE, ply.targetSeq or -1
 	end
+end)
 
-	if not toCheck then
-		return "check failed"
-	end
-
-	return "ok"
-end
-
-function ENT:RunBehaviour()
-	self:SetSequence("idle_all_01")
-	while (true) do -- This will run constantly.
-		local success, err = pcall(function()
-			if self.targetPosition then
-				self:SetSequence("walk_all")
-				self.loco:SetDesiredSpeed(200)
-				self:PathfindTo(self.targetPosition, {tolerance = 80, draw = true}, self.targetPosition)
-				self:SetSequence("idle_all_01")
-				self.targetPosition = nil
-			elseif self.followEntity then
-				self:SetSequence("walk_all")
-				self.loco:SetDesiredSpeed(200)
-				self:PathfindTo(self.followEntity, {tolerance = 80, draw = true}, self.followEntity)
-				self:SetSequence("idle_all_01")
-			elseif self.targetSeq then
-				local id, dur = self:LookupSequence(self.targetSeq)
-				if (id ~= -1) then
-					self:ResetSequenceInfo()
-					self:SetSequence(id)
-					timer.Simple(dur, function()
-						self:SetSequence("idle_all_01")
-						self:ResetSequenceInfo()
-					end)
-				end
-				self.targetSeq = nil
-				self.targetSeqSpeed = nil
-			end
-		end)
-		if not success then print("RUNBEHAVIOR ERROR: " .. err) end
-		coroutine.wait(1) -- Pause for a second. Don't want crashes.
-	end
-end
-
-concommand.Add("setupai", function(ply,cmd,args)
-	if not SERVER then return end
+concommand.Add("startai", function(ply,cmd,args)
 	print(pcall(function()
-		local ent = Entity(tonumber(args[1]))
-		ent.Username = args[2]
-		ent.Provider = args[3]
-		ent.AIModel = args[4]
-		ent.CFGID = args[5]
-		ent.CFAID = args[6]
-		ent.ApiKey = args[7]
+		local ent = LocalPlayer()
+		ent.Enabled = true
+		ent.Username = args[1]
+		ent.Provider = args[2]
+		ent.AIModel = args[3]
+		ent.CFGID = args[4]
+		ent.CFAID = args[5]
+		ent.ApiKey = args[6]
 
-		table.insert(bots, ent)
+		local playermodel = table.Random(playermodels)
+		ent:SetModel(playermodel)
 
 		ent.AIC = {{
-			role = args[3] == "openai" and "developer" or "system",
+			role = args[2] == "openai" and "developer" or "system",
 			content = [[
 You are a playful Garry's Mod bot named ]] .. ent.Username .. [[ that can converse with players, move, and interact with the world by using tools.
 You look like (a) ]] .. ent:GetModel():GetFileFromFilename():StripExtension() .. [[ in-game.
@@ -1753,32 +1706,19 @@ Try to use short responses if possible.
 Only use one tool call per response.
 Do not use emojis in your responses.
 Do not use punctuation, grammar, or capitalization.
-Only retry calling tools 3 times. If it doesn't work, then say the most likely issue.
+Only retry calling tools twice. If it doesn't work, then say the most likely issue.
 You have 2 modules you can activate. You can only use their tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
 This is extremely important to me, take a deep breath and have fun :)]]
 		}}
 	end))
 end)
 
-hook.Add("PlayerSay", "AIChatHook", function(ply, text)
-	for i,v in pairs(bots) do
-		if !IsValid(v) then
-			table.remove(bots, i)
-			continue
-		end
-		if text:lower():find(v.Username:lower()) then
-			v:PromptAI(ply:Nick(), {
-				["role"] = "user",
-				["content"] = ply:Nick() .. ": " .. text
-			})
-			break
-		end
+hook.Add("OnPlayerChat", "AIChatHook", function(ply, text)
+	if text:lower():find(LocalPlayer().Username:sub(1,4):lower()) then
+		LocalPlayer():PromptAI(ply:Nick(), {
+			["role"] = "user",
+			["content"] = ply:Nick() .. ": " .. text
+		})
+		break
 	end
-	return text
 end)
-
-list.Set( "NPC", "playai", {
-	Name = "PlayAI Bot",
-	Class = "playai",
-	Category = "Nextbot"
-})
