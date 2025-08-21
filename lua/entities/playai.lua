@@ -1699,6 +1699,7 @@ function ENT:PathfindTo(position, options, toCheck)
 end
 
 function ENT:RunBehaviour()
+	self:SetSequence("idle_all_01")
 	while (true) do -- This will run constantly.
 		local success, err = pcall(function()
 			if self.targetPosition then
@@ -1723,8 +1724,6 @@ function ENT:RunBehaviour()
 				end
 				self.targetSeq = nil
 				self.targetSeqSpeed = nil
-			else
-				self:SetSequence("idle_all_01")
 			end
 		end)
 		if not success then print("RUNBEHAVIOR ERROR: " .. err) end
