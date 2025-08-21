@@ -1664,25 +1664,25 @@ end
 
 function ENT:RunBehaviour()
 	while (true) do -- This will run constantly.
-		self:SetSequence("idle")
+		self:SetSequence("idle_all_01")
 		local success, err = pcall(function()
 			if self.targetPosition then
 				self:SetSequence("walk_all")
 				self.loco:SetDesiredSpeed(200)
 				self:PathfindTo(self.targetPosition, {tolerance = 80, draw = true}, self.targetPosition)
-				self:SetSequence("idle")
+				self:SetSequence("idle_all_01")
 				self.targetPosition = nil
 			elseif self.followEntity then
 				self:SetSequence("walk_all")
 				self.loco:SetDesiredSpeed(200)
 				self:PathfindTo(self.followEntity:GetPos(), {tolerance = 80, draw = true}, self.followEntity)
-				self:SetSequence("idle")
+				self:SetSequence("idle_all_01")
 			elseif self.targetSeq then
 				local id, dur = self:LookupSequence(self.targetSeq)
 				if (id ~= -1) then
 					self:SetSequence(id)
 					timer.Simple(dur, function()
-						self:SetSequence("idle")
+						self:SetSequence("idle_all_01")
 						self:ResetSequenceInfo()
 					end)
 				end
