@@ -1682,12 +1682,12 @@ concommand.Add("startai", function(ply,cmd,args)
 	print(pcall(function()
 		local ent = LocalPlayer()
 		ent.Enabled = true
-		ent.Username = args[1]
-		ent.Provider = args[2]
-		ent.AIModel = args[3]
-		ent.CFGID = args[4]
-		ent.CFAID = args[5]
-		ent.ApiKey = args[6]
+		ent.Username = ent:Nick():sub(1,4)
+		ent.Provider = args[1]
+		ent.AIModel = args[2]
+		ent.CFGID = args[3]
+		ent.CFAID = args[4]
+		ent.ApiKey = args[5]
 
 		local playermodel = table.Random(playermodels)
 		ent:SetModel(playermodel)
@@ -1714,7 +1714,7 @@ This is extremely important to me, take a deep breath and have fun :)]]
 end)
 
 hook.Add("OnPlayerChat", "AIChatHook", function(ply, text)
-	if text:lower():find(LocalPlayer().Username:sub(1,4):lower()) then
+	if text:lower():find(LocalPlayer().Username:lower()) then
 		LocalPlayer():PromptAI(ply:Nick(), {
 			["role"] = "user",
 			["content"] = ply:Nick() .. ": " .. text
