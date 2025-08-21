@@ -1700,7 +1700,6 @@ end
 
 function ENT:RunBehaviour()
 	while (true) do -- This will run constantly.
-		self:SetSequence("idle_all_01")
 		local success, err = pcall(function()
 			if self.targetPosition then
 				self:SetSequence("walk_all")
@@ -1724,6 +1723,8 @@ function ENT:RunBehaviour()
 				end
 				self.targetSeq = nil
 				self.targetSeqSpeed = nil
+			else
+				self:SetSequence("idle_all_01")
 			end
 		end)
 		if not success then print("RUNBEHAVIOR ERROR: " .. err) end
