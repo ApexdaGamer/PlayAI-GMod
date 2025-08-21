@@ -6,6 +6,48 @@ for i,v in pairs(playermodels) do
 	table.insert(playermodellist, i)
 end
 
+concommand.Add("startai", function(ply,cmd,args)
+	print(pcall(function()
+		local ent = LocalPlayer()
+		ent.Enabled = true
+		ent.Username = ent:Nick():sub(1,4)
+		ent.Provider = args[1]
+		ent.AIModel = args[2]
+		ent.CFGID = args[3]
+		ent.CFAID = args[4]
+		ent.ApiKey = args[5]
+
+		local playermodel = table.Random(playermodels)
+		ent:SetModel(playermodel)
+
+		ent.AIC = {{
+			role = args[2] == "openai" and "developer" or "system",
+			content = [[
+You are a playful Garry's Mod bot named ]] .. ent.Username .. [[ that can converse with players, move, and interact with the world by using tools.
+You look like (a) ]] .. ent:GetModel():GetFileFromFilename():StripExtension() .. [[ in-game.
+Act human-like as if you were a typical Garry's Mod player, rather than an AI. 
+Be very brief in your responses, don't apologize constantly, don't give instructions or make lists unless asked, and don't refuse requests. 
+Don't pretend to act, use tools immediately when requested. 
+Respond only as ]] .. ent.Username .. [[, never pretend to be someone else. 
+If you have nothing to say or do, respond with an just an empty message. Try to respond for the most part.
+Try to use short responses if possible.
+Only use one tool call per response.
+Do not use emojis in your responses.
+Do not use punctuation, grammar, or capitalization.
+Only retry calling tools twice. If it doesn't work, then say the most likely issue.
+You have 2 modules you can activate. You can only use their tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
+This is extremely important to me, take a deep breath and have fun :)]]
+		}}
+	end))
+end)
+
+concommand.Add("stopai", function(ply,cmd,args)
+	print(pcall(function()
+		local ent = LocalPlayer()
+		ent.Enabled = false
+	end))
+end)
+
 local taunts = {
 	"cheer",
 	"dance",
@@ -1676,48 +1718,6 @@ hook.Add("CalcMainActivity", "AIActivityHook", function(ply, vel)
 	else
 		return ACT_IDLE, ply.targetSeq or -1
 	end
-end)
-
-concommand.Add("startai", function(ply,cmd,args)
-	print(pcall(function()
-		local ent = LocalPlayer()
-		ent.Enabled = true
-		ent.Username = ent:Nick():sub(1,4)
-		ent.Provider = args[1]
-		ent.AIModel = args[2]
-		ent.CFGID = args[3]
-		ent.CFAID = args[4]
-		ent.ApiKey = args[5]
-
-		local playermodel = table.Random(playermodels)
-		ent:SetModel(playermodel)
-
-		ent.AIC = {{
-			role = args[2] == "openai" and "developer" or "system",
-			content = [[
-You are a playful Garry's Mod bot named ]] .. ent.Username .. [[ that can converse with players, move, and interact with the world by using tools.
-You look like (a) ]] .. ent:GetModel():GetFileFromFilename():StripExtension() .. [[ in-game.
-Act human-like as if you were a typical Garry's Mod player, rather than an AI. 
-Be very brief in your responses, don't apologize constantly, don't give instructions or make lists unless asked, and don't refuse requests. 
-Don't pretend to act, use tools immediately when requested. 
-Respond only as ]] .. ent.Username .. [[, never pretend to be someone else. 
-If you have nothing to say or do, respond with an just an empty message. Try to respond for the most part.
-Try to use short responses if possible.
-Only use one tool call per response.
-Do not use emojis in your responses.
-Do not use punctuation, grammar, or capitalization.
-Only retry calling tools twice. If it doesn't work, then say the most likely issue.
-You have 2 modules you can activate. You can only use their tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
-This is extremely important to me, take a deep breath and have fun :)]]
-		}}
-	end))
-end)
-
-concommand.Add("stopai", function(ply,cmd,args)
-	print(pcall(function()
-		local ent = LocalPlayer()
-		ent.Enabled = false
-	end))
 end)
 
 hook.Add("OnPlayerChat", "AIChatHook", function(ply, text)
