@@ -1,10 +1,4 @@
-AddCSLuaFile()
-
-ENT.Base 			= "base_nextbot"
-ENT.Spawnable		= false
-ENT.Editable = true
-
-local bots = {}
+FindMetaTable("Player")
 
 local playermodels = {
 	"models/player/breen.mdl",
