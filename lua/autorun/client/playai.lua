@@ -1720,7 +1720,7 @@ hook.Add("CalcMainActivity", "AIActivityHook", function(ply, vel)
 	end
 end)
 
-hook.Add("OnPlayerChat", "AIChatHook", function(ply, text)
+hook.Add("OnPlayerChat", "AIClientChatHook", function(ply, text)
 	if not LocalPlayer().Enabled then return end
 	if text:lower():find(LocalPlayer().Username:lower()) then
 		LocalPlayer():PromptAI(ply:Nick(), {
