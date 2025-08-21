@@ -1727,6 +1727,5 @@ hook.Add("OnPlayerChat", "AIClientChatHook", function(ply, text)
 			["role"] = "user",
 			["content"] = ply:Nick() .. ": " .. text
 		})
-		break
 	end
 end)
