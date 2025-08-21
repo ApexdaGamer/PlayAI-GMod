@@ -45,7 +45,8 @@ Try to use short responses if possible.
 Only use one tool call per response.
 Do not use emojis in your responses.
 Do not use punctuation, grammar, or capitalization.
-You have 2 modules you can activate. You can only use these tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
+Only retry calling tools 3 times. If it doesn't work, then say the most likely issue.
+You have 2 modules you can activate. You can only use their tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
 This is extremely important to me, take a deep breath and have fun :)]]
 		}}
 	end
@@ -1670,13 +1671,13 @@ function ENT:PathfindTo(position, options, toCheck)
 	local path = Path("Follow")
 	path:SetMinLookAheadDistance(options.lookahead or 300)
 	path:SetGoalTolerance(options.tolerance or 20)
-	path:Compute(self, position)
+	path:Compute(self, (type(position) == "Entity" and position:GetPos() or position))
 
 	if (!path:IsValid()) then return "failed" end
 
-	while (path:IsValid() and toCheck) do
+	while (path:IsValid() and toCheck and (self:GetPos():Distance(type(position) == "Entity" and position:GetPos() or position))) do
 		if (path:GetAge() > 0.1) then
-			path:Compute(self, position)
+			path:Compute(self, (type(position) == "Entity" and position:GetPos() or position))
 		end
 		path:Update(self)
 
@@ -1710,7 +1711,7 @@ function ENT:RunBehaviour()
 			elseif self.followEntity then
 				self:SetSequence("walk_all")
 				self.loco:SetDesiredSpeed(200)
-				self:PathfindTo(self.followEntity:GetPos(), {tolerance = 80, draw = true}, self.followEntity)
+				self:PathfindTo(self.followEntity, {tolerance = 80, draw = true}, self.followEntity)
 				self:SetSequence("idle_all_01")
 			elseif self.targetSeq then
 				local id, dur = self:LookupSequence(self.targetSeq)
@@ -1758,7 +1759,7 @@ Only use one tool call per response.
 Do not use emojis in your responses.
 Do not use punctuation, grammar, or capitalization.
 Only retry calling tools 3 times. If it doesn't work, then say the most likely issue.
-You have 2 modules you can activate. You can only use these tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
+You have 2 modules you can activate. You can only use their tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
 This is extremely important to me, take a deep breath and have fun :)]]
 		}}
 	end))
