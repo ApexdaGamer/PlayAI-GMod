@@ -6,9 +6,18 @@ ENT.Editable = true
 
 local bots = {}
 
+local playermodels = {
+	"models/player/breen.mdl",
+	"models/player/gman_high.mdl",
+	"models/player/alyx.mdl",
+	"models/player/eli.mdl",
+	"models/player/Group01/male_07.mdl",
+	"models/player/kleiner.mdl",
+	"models/player/Group02/male_08.mdl"
+}
+
 function ENT:Initialize()
 	local name = "bot"
-	self:SetModel("models/player/gman_high.mdl")
 	self.PlayAIBot = true
 	self.Username = "bot"
 	self.Provider = "cf"
@@ -17,6 +26,8 @@ function ENT:Initialize()
 	self.CFAID = ""
 	self.ApiKey = ""
 	if SERVER then
+		local playermodel = table.Random(playermodels)
+		self:SetModel(playermodel)
 		self:SetName(name)
 		self:SetHealth(100)
 
@@ -1090,6 +1101,12 @@ local props = {
 	"models/props_wasteland/wood_fence02a_shard01a.mdl"
 }
 
+local enabledModules = {}
+local availableModules = {
+	"propSpawning",
+	"playerModelSwitching"
+}
+
 local tools = {
 	{
 		["type"] = "function",
@@ -1208,8 +1225,45 @@ local tools = {
 	{
 		["type"] = "function",
 		["function"] = {
+			name = "enableModule",
+			description = "Enables a module for only the next API request.",
+			parameters = {
+				["type"] = "object",
+				["properties"] = {
+					module = {
+						type = "string",
+						description = "The module to enable Possible values are: " .. table.concat(availableModules, ", ")
+					}
+				},
+				required = {"module"}
+			}
+		}
+	},
+	{
+		["type"] = "function",
+		["function"] = {
+			name = "stop",
+			description = "Stops all activities.",
+			parameters = {
+				["type"] = "object",
+				["properties"] = {
+					ignore = {
+						type = "integer",
+						description = "Ignored value, bugfix"
+					}
+				},
+				required = {}
+			}
+		}
+	}
+}
+
+if table.HasValue(enabledModules, "propSpawning") then
+	table.insert(tools, {
+		["type"] = "function",
+		["function"] = {
 			name = "spawnProp",
-			description = "Spawns a prop above you.",
+			description = "Spawns a prop next to you.",
 			parameters = {
 				["type"] = "object",
 				["properties"] = {
@@ -1221,11 +1275,31 @@ local tools = {
 				required = {"model"}
 			}
 		}
-	}
-}
+	})
+end
+if table.HasValue(enabledModules, "playerModelSwitching") then
+	table.insert(tools, {
+		["type"] = "function",
+		["function"] = {
+			name = "switchPlayermodel",
+			description = "Switches your playermodel. Only call this if the user explicitly tells you to.",
+			parameters = {
+				["type"] = "object",
+				["properties"] = {
+					model = {
+						type = "string",
+						description = "The playermodel to switch to. Possible values are: " .. table.concat(playermodels, ", ")
+					}
+				},
+				required = {"model"}
+			}
+		}
+	})
+end
 
 function ENT:handleResponse(response, src, ...)
 	local tres = {}
+	enabledModules = {}
 	if response["tool_calls"] then
 		print("Received tool calls!")
 		if #response["tool_calls"] > 0 then
@@ -1359,6 +1433,26 @@ function ENT:handleResponse(response, src, ...)
 						["tool_call_id"] = id
 					})
 				end
+			elseif name == "stop" then
+				self.targetSeq = nil 
+				self.targetSeqSpeed = nil 
+				self.followEntity = nil
+				self.targetPosition = nil
+				self:SetSequence("idle")
+				table.insert(tres, {
+					["role"] = "tool",
+					["content"] = "Successfully stopped all activities!",
+					["tool_name"] = name,
+					["tool_call_id"] = id
+				})
+			elseif name == "enableModule" then
+				table.insert(enabledModules, args["module"])
+				table.insert(tres, {
+					["role"] = "tool",
+					["content"] = "Successfully stopped all activities!",
+					["tool_name"] = name,
+					["tool_call_id"] = id
+				})
 			else
 				table.insert(tres, {
 					["role"] = "tool",
@@ -1536,23 +1630,62 @@ if SERVER then
 	end)
 end
 
+function ENT:PathfindTo(position, options, toCheck)
+	options = options or {}
+	local path = Path("Follow")
+	path:SetMinLookAheadDistance(options.lookahead or 300)
+	path:SetGoalTolerance(options.tolerance or 20)
+	path:Compute(self, position)
+
+	if (!path:IsValid()) then return "failed" end
+
+	while (path:IsValid() and toCheck) do
+		if (path:GetAge() > 0.1) then
+			path:Compute(self, position)
+		end
+		path:Update(self)
+
+		if (options.draw) then path:Draw() end
+		
+		if (self.loco:IsStuck()) then
+			self:HandleStuck()
+			return "stuck"
+		end
+
+		coroutine.yield()
+	end
+
+	if not toCheck then
+		return "check failed"
+	end
+
+	return "ok"
+end
+
 function ENT:RunBehaviour()
 	while (true) do -- This will run constantly.
-		self:StartActivity(ACT_IDLE)
+		self:SetSequence("idle")
 		local success, err = pcall(function()
 			if self.targetPosition then
-				self:StartActivity(ACT_WALK)
+				self:SetSequence("walk_all")
 				self.loco:SetDesiredSpeed(200)
-				self:MoveToPos(self.targetPosition, {tolerance = 80})
-				self:StartActivity(ACT_IDLE)
+				self:PathfindTo(self.targetPosition, {tolerance = 80, draw = true}, self.targetPosition)
+				self:SetSequence("idle")
 				self.targetPosition = nil
 			elseif self.followEntity then
-				self:StartActivity(ACT_WALK)
+				self:SetSequence("walk_all")
 				self.loco:SetDesiredSpeed(200)
-				self:MoveToPos(self.followEntity:GetPos(), {tolerance = 80})
-				self:StartActivity(ACT_IDLE)
+				self:PathfindTo(self.followEntity:GetPos(), {tolerance = 80, draw = true}, self.followEntity)
+				self:SetSequence("idle")
 			elseif self.targetSeq then
-				self:PlaySequenceAndWait(self.targetSeq, self.targetSeqSpeed or 1)
+				local id, dur = self:LookupSequence(self.targetSeq)
+				if (id ~= -1) then
+					self:SetSequence(id)
+					timer.Simple(dur, function()
+						self:SetSequence("idle")
+						self:ResetSequenceInfo()
+					end)
+				end
 				self.targetSeq = nil
 				self.targetSeqSpeed = nil
 			end
@@ -1584,7 +1717,7 @@ Act human-like as if you were a typical Garry's Mod player, rather than an AI.
 Be very brief in your responses, don't apologize constantly, don't give instructions or make lists unless asked, and don't refuse requests. 
 Don't pretend to act, use tools immediately when requested. 
 Respond only as ]] .. ent.Username .. [[, never pretend to be someone else. 
-If you have nothing to say or do, respond with an just an empty message.
+If you have nothing to say or do, respond with an just an empty message. Try to respond for the most part.
 Try to use short responses if possible.
 Only use one tool call per response.
 Do not use emojis in your responses.
