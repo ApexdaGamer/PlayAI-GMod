@@ -1716,6 +1716,7 @@ function ENT:RunBehaviour()
 			elseif self.targetSeq then
 				local id, dur = self:LookupSequence(self.targetSeq)
 				if (id ~= -1) then
+					self:ResetSequenceInfo()
 					self:SetSequence(id)
 					timer.Simple(dur, function()
 						self:SetSequence("idle_all_01")
