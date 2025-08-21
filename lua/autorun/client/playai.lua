@@ -1289,7 +1289,7 @@ function handleEnabledModules()
 					["properties"] = {
 						model = {
 							type = "string",
-							description = "The playermodel to switch to. Possible values are: " .. table.concat(playermodels, ", ")
+							description = "The playermodel to switch to. Possible values are: " .. table.concat(playermodellist, ", ")
 						}
 					},
 					required = {"model"}
@@ -1643,7 +1643,7 @@ end
 
 local rePathDelay = 1
 function BOT:PathfindTo(ply, cmd, pos)
-	local currentArea = navmesh.GetNearestNavArea( ply:GetPos() )
+	--[[local currentArea = navmesh.GetNearestNavArea( ply:GetPos() )
 	ply.lastRePath = ply.lastRePath or 0
 	ply.lastRePath2 = ply.lastRePath2 or 0
 	if ( ply.path && ply.lastRePath + rePathDelay < CurTime() && currentArea != ply.targetArea ) then
@@ -1681,9 +1681,9 @@ function BOT:PathfindTo(ply, cmd, pos)
 		table.remove( ply.path )
 		ply.targetArea = nil
 		return
-	end
+	end]]
 
-	local targetang = ( ply.targetArea:GetCenter() - ply:GetPos() ):GetNormalized():Angle()
+	local targetang = ( pos - ply:GetPos() ):GetNormalized():Angle()
 	cmd:SetViewAngles( targetang )
 	cmd:SetForwardMove( 1000 )
 end
