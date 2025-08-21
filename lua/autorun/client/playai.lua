@@ -1420,10 +1420,15 @@ function BOT:handleResponse(response, src, ...)
 				})
 			elseif name == "spawnProp" then
 				local success, err = pcall(function()
-					local ent = ents.Create("prop_physics")
-					ent:SetPos(self:GetPos() + Vector(0,45,0))
-					ent:SetModel(args["model"])
-					ent:Spawn()
+					if SERVER then
+						local ent = ents.Create("prop_physics")
+						ent:SetPos(self:GetPos() + Vector(0,45,50))
+						ent:SetModel(args["model"])
+						ent:Spawn()
+					else
+						self:SetEyeAngles(EyeAngles() - Angle(45,0,0))
+						RunConsoleCommand("gm_spawn", args["model"])
+					end
 				end)
 				if success then
 					table.insert(tres, {
