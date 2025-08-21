@@ -1384,7 +1384,6 @@ function BOT:handleResponse(response, src, ...)
 				print("follow " .. (ran and "found" or "did not find") .. " the specified user.")
 			elseif name == "taunt" then
 				local taunt,speed = args["taunt"]
-				speed = math.Clamp(speed, 0.25, 10)
 				if table.HasValue(self:GetSequenceList(), "taunt_" .. taunt) then
 					self.targetSeq = "taunt_" .. taunt
 					table.insert(tres, {
