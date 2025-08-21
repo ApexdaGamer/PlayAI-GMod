@@ -6,15 +6,7 @@ ENT.Editable = true
 
 local bots = {}
 
-local playermodels = {
-	"models/player/breen.mdl",
-	"models/player/gman_high.mdl",
-	"models/player/alyx.mdl",
-	"models/player/eli.mdl",
-	"models/player/Group01/male_07.mdl",
-	"models/player/kleiner.mdl",
-	"models/player/Group02/male_08.mdl"
-}
+local playermodels = player_manager.AllValidModels()
 
 function ENT:Initialize()
 	local name = "bot"
