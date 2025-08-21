@@ -1723,6 +1723,7 @@ Try to use short responses if possible.
 Only use one tool call per response.
 Do not use emojis in your responses.
 Do not use punctuation, grammar, or capitalization.
+Only retry calling tools 3 times. If it doesn't work, then say the most likely issue.
 You have 2 modules you can activate. You can only use these tools when the modules are activated. The modules are listed here: propSpawning, playerModelSwitching.
 This is extremely important to me, take a deep breath and have fun :)]]
 		}}
